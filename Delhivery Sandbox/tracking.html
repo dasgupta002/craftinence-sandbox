@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+  <meta charset = "UTF-8">
+  <meta name = "viewport" content = "width=device-width, initial-scale=1.0">
+  <meta http-equiv = "X-UA-Compatible" content = "ie=edge">
+  <title>Delhivery Sandbox</title>
+  <link rel = "stylesheet" href = "delhivery.css">
+  <link rel = "stylesheet" href = "https://fonts.googleapis.com/css?family=Sofia">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Trirong">
+  <link rel = "stylesheet" href = "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity = "sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin = "anonymous">  
+  <script src = "https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity = "sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin = "anonymous"></script>
+</head>
+<body>
+  <div class = "container">
+    <h1 class = "topic display-4 mb-4">Delhivery Sandbox</h1>
+    <form id = "getTracking">
+      <div class = "form-group">
+        <input type = "text" id = "waybill" class = "form-control" placeholder = "Enter your waybill">
+      </div>
+      <input type = "submit" class = "btn btn-secondary" value = "Track Shipment">
+    </form>
+  </div>
+  
+  <div class = "container mt-5 mb-5">
+    <div id = "trackdetail"></div>
+  </div>	
+
+  <script type = "text/javascript">
+    document.getElementById('getTracking').addEventListener('submit', getTracking);
+    function getTracking (e) {
+	  e.preventDefault ();
+	  var token = '664c33418a72bfa421f3d11fdf32ae7afce2048b';
+	  var waybill = document.getElementById('waybill').value;
+      fetch(`https://track.delhivery.com/api/v1/packages/json/?waybill=${waybill}&token=${token}`)
+      .then((res) => res.json())
+      .then((data) => {
+	    let phrase = '';
+	    if (data.Error) {
+		  phrase = `<div class = "alert alert-warning" role = "alert">${ data.Error }</div>`;
+		}
+		else {
+		  let obj = data.ShipmentData;
+		  let out = obj[0].Shipment;
+		  phrase = `<div class = "jumbotron row">
+	                   <div class=  "col-md-6 offset-md-3">
+	                       <h5 class = "title">Shipment Status</h5>
+	                           <ul class = "timeline">`;
+          let scans = out.Scans;
+          scans.forEach(function (scan) {
+               let datetime = scan.ScanDetail.ScanDateTime;
+			   let display = moment(datetime).format('MMMM DD YYYY, h:mm a');
+			   phrase += `<li>
+	                        <p>
+	                         ${ display }
+	                         <br>
+	                         ${ scan.ScanDetail.Scan } --> ${ scan.ScanDetail.Instructions }
+	                         <br>
+	                         ${ scan.ScanDetail.ScannedLocation }
+	                         </p>
+	                      </li>`;  
+          });
+          phrase += `</ul></div></div>`;		  
+		}  
+		document.getElementById('trackdetail').innerHTML = phrase;	
+	   })
+	  .catch((err) => console.log(err))
+    }
+  </script>
+</body>
+</html>
